@@ -1,0 +1,8 @@
+D:\Програмирование\IBA\C#-Pilot\Words\bin\Debug\Words.exe.config
+D:\Програмирование\IBA\C#-Pilot\Words\bin\Debug\Words.exe
+D:\Програмирование\IBA\C#-Pilot\Words\bin\Debug\Words.pdb
+D:\Програмирование\IBA\C#-Pilot\Words\obj\Debug\Words.csprojResolveAssemblyReference.cache
+D:\Програмирование\IBA\C#-Pilot\Words\obj\Debug\Words.exe
+D:\Програмирование\IBA\C#-Pilot\Words\obj\Debug\Words.pdb
+d:\Програмирование\IBA\C#-Pilot\Words\bin\Debug\Newtonsoft.Json.dll
+d:\Програмирование\IBA\C#-Pilot\Words\bin\Debug\Newtonsoft.Json.xml
