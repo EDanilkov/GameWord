@@ -45,7 +45,10 @@ namespace Words
             }
             catch
             {
-
+                Console.Clear();
+                Console.WriteLine("Ошибка открытия файла для записи результатов.");
+                Console.ReadKey();
+                Environment.Exit(1);
             }
         }
     }
