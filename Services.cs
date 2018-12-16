@@ -21,10 +21,10 @@ namespace Words
             bool isIt = false;
             foreach (GameWords gm in CollectionGameWords.gameWordsCollection)
             {
-                if (String.Equals(g.player1.Name, gm.player1.Name) && String.Equals(g.player2.Name, gm.player2.Name))
+                if (String.Equals(g.Player1.Name, gm.Player1.Name) && String.Equals(g.Player2.Name, gm.Player2.Name))
                 {
-                    gm.player1.Wins += g.player1.Wins;
-                    gm.player2.Wins += g.player2.Wins;
+                    gm.Player1.Wins += g.Player1.Wins;
+                    gm.Player2.Wins += g.Player2.Wins;
                     isIt = true;
                     break;
                 }
@@ -32,14 +32,21 @@ namespace Words
             if (!isIt) CollectionGameWords.gameWordsCollection.Add(g);
 
             String json = JsonConvert.SerializeObject(CollectionGameWords.gameWordsCollection);
-            File.WriteAllText("GameWords.json", json, Encoding.GetEncoding(1251));
+            File.WriteAllText("GameWords.json", json, Encoding.UTF8);
         }
 
 
         public void Load()
         {
-            string s = File.ReadAllText("GameWords.json");
-            CollectionGameWords.gameWordsCollection = JsonConvert.DeserializeObject<List<GameWords>>(s) == null ? new List<GameWords>() : JsonConvert.DeserializeObject<List<GameWords>>(s);
+            try
+            {
+                string s = File.ReadAllText("GameWords.json");
+                CollectionGameWords.gameWordsCollection = JsonConvert.DeserializeObject<List<GameWords>>(s) == null ? new List<GameWords>() : JsonConvert.DeserializeObject<List<GameWords>>(s);
+            }
+            catch
+            {
+
+            }
         }
     }
 }

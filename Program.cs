@@ -16,13 +16,15 @@ namespace Words
         {
             SetConsoleCtrlHandler(new HandlerRoutine(ConsoleCtrlCheck), true);
 
-
             game = new GameWords();
-            game.Start();
+            game.OnTime += game.WinByTime;
+            game.ChangeLanguage();
+            game.CreatePlayers();
+            game.Menu();
 
             Console.WriteLine("CTRL+C,CTRL+BREAK or suppress the application to exit");
 
-            while (!isclosing) ;
+            while (!isclosing);
         }
 
         private static bool ConsoleCtrlCheck(CtrlTypes ctrlType)
@@ -73,6 +75,6 @@ namespace Words
 
         }
         #endregion
-
+        
     }
 }

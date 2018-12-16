@@ -6,3 +6,11 @@ D:\Програмирование\IBA\C#-Pilot\Words\obj\Debug\Words.exe
 D:\Програмирование\IBA\C#-Pilot\Words\obj\Debug\Words.pdb
 d:\Програмирование\IBA\C#-Pilot\Words\bin\Debug\Newtonsoft.Json.dll
 d:\Програмирование\IBA\C#-Pilot\Words\bin\Debug\Newtonsoft.Json.xml
+d:\Програмирование\IBA\C#-Pilot\Words\obj\Debug\Words.Properties.Resources.resources
+d:\Програмирование\IBA\C#-Pilot\Words\obj\Debug\Words.csproj.GenerateResource.Cache
+d:\Програмирование\IBA\C#-Pilot\Words\bin\Debug\en-GB\Words.resources.dll
+d:\Програмирование\IBA\C#-Pilot\Words\bin\Debug\ru-RU\Words.resources.dll
+d:\Програмирование\IBA\C#-Pilot\Words\obj\Debug\Words.Properties.Resources.en-GB.resources
+d:\Програмирование\IBA\C#-Pilot\Words\obj\Debug\Words.Properties.Resources.ru-RU.resources
+d:\Програмирование\IBA\C#-Pilot\Words\obj\Debug\en-GB\Words.resources.dll
+d:\Програмирование\IBA\C#-Pilot\Words\obj\Debug\ru-RU\Words.resources.dll

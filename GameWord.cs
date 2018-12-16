@@ -9,65 +9,133 @@ using Newtonsoft.Json;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Collections;
+using System.Globalization;
 
 namespace Words
 {
     class GameWords
     {
-        public Player player1 = new Player();
-        public Player player2 = new Player();
-        private Services Services = new Services();
+
+        public Player Player1 = new Player();
+        public Player Player2 = new Player();
+        private Services services = new Services();
         private string firstWord;
-        private Thread readThread;
-        private System.Timers.Timer readTimer;
+        private System.Timers.Timer readTimer = new System.Timers.Timer();
+        private System.Timers.Timer showTimer = new System.Timers.Timer();
+        private DateTime timer;
+        private string[] items;
+        private ConsoleMenu menu;
+        private int timeGame = 10000;
+
+
+        private int x, y, x1, y1;
         private List<string> words = new List<string>();
-        private static bool isRead = false;
         private static bool isTimeLeft;
         private static bool isFirstUser = true;
 
+        public delegate void MethodContainer();
+        public event MethodContainer OnTime;
+
+        delegate void method();
+
         public GameWords(GameWords g)
         {
-            player1 = g.player1;
-            player2 = g.player2;
+            Player1 = g.Player1;
+            Player2 = g.Player2;
         }
 
         public GameWords()
         {
 
         }
+        
+
+        public void WinByTime()
+        {
+            showTimer.Stop();
+            Console.Clear();
+            readTimer.Stop();
+            isTimeLeft = true;
+            Console.WriteLine(Localization.GetLocalizedString("TimeOut"));
+            Console.WriteLine(Localization.GetLocalizedString("PressEnter"));
+        }
+
+        public void Menu()
+        {
+            showTimer.Elapsed += new ElapsedEventHandler(ShowTimer);
+            readTimer.Elapsed += new ElapsedEventHandler(TimeLeft);
+            method[] methods = new method[] { Start, CreatePlayers, SetTime, ChangeLanguage, Exit };
+            items = new string[] { Localization.GetLocalizedString("Start"), Localization.GetLocalizedString("ChangePlayers"), Localization.GetLocalizedString("SetTime"), Localization.GetLocalizedString("ChangeLanguage"), Localization.GetLocalizedString("Exit") };
+            menu = new ConsoleMenu(items);
+            int menuResult;
+            do
+            {
+                menuResult = menu.PrintMenu();
+                methods[menuResult]();
+                Console.WriteLine(Localization.GetLocalizedString("PressEnter"));
+                Console.ReadKey();
+            } while (menuResult != items.Length - 1);
+        }
+
+        public void SetTime()
+        {
+            Console.Clear();
+            do
+            {
+                Console.WriteLine("Введите время игры: ");
+            }
+            while (!int.TryParse(Console.ReadLine(), out timeGame));
+            timeGame *= 1000;
+        }
+        
+        public void ChangeLanguage()
+        {
+            Console.Clear();
+            string[] items = { "Русский", "English"};
+            ConsoleMenuLanguage languageMenu = new ConsoleMenuLanguage(items);
+            int menuResult = languageMenu.PrintMenu();
+            switch (menuResult)
+            {
+                case 0:
+                    Localization.SetLanguage("ru-RU");
+                    break;
+                case 1:
+                    Localization.SetLanguage("en-GB");
+                    break;
+            }
+            items = new string[] { Localization.GetLocalizedString("Start"), Localization.GetLocalizedString("ChangePlayers"), Localization.GetLocalizedString("ChangeLanguage"), Localization.GetLocalizedString("Exit") };
+            menu = new ConsoleMenu(items);
+        }
+
+        public void Exit()
+        {
+            services.Save(this);
+            Environment.Exit(0);
+        }
+
+        public void CreatePlayers()
+        {
+            if(!(firstWord == null))
+            {
+                services.Save(this);
+            }
+            Console.Clear();
+            Console.WriteLine(Localization.GetLocalizedString("FirstPlayerName") + ":");
+            Player1.Scan();
+            Console.WriteLine(Localization.GetLocalizedString("SecondPlayerName") + ":");
+            Player2.Scan();
+        }
 
         public void Start()
         {
-            Console.WriteLine("Имя первого игрока:");
-            player1.Scan();
-            Console.WriteLine("Имя второго игрока:");
-            player2.Scan();
-            string Choose;
-            do
-            {
-                firstWord = null;
-                Round();
-                Console.WriteLine("Вы хотите сыграть ещё раз ? (Да/Нет)");
-
-                while (!(String.Equals((Choose = Console.ReadLine()), "Нет") || String.Equals(Choose, "Да")))
-                {
-                    if(ConsoleCommand(Choose) == null)
-                    {
-                        Console.WriteLine("Вы хотите сыграть ещё раз ? (Да/Нет)");
-                    }
-                    else
-                    {
-                        Console.WriteLine("Введите Да/Нет.");
-                    }                    
-                }
-            } while (String.Equals(Choose, "Да"));
-            
-            Services.Save(this);
+            words.Clear();
+            firstWord = null;
+            Round();
         }
 
         public void ShowWords()
         {
-            Console.WriteLine($"{player1.Name}\t\t|\t\t{player2.Name}");
+            Console.WriteLine($"{Player1.Name}\t\t|\t\t{Player2.Name}");
             int n = words.Count;
             for (int i = 0; i < n; i += 2)
             {
@@ -82,22 +150,24 @@ namespace Words
             }
         }
 
+        
+
         private void Score()
         {
-            Services.Load();
-            Console.WriteLine($"{player1.Name}\t\t|\t\t{player2.Name}");
-            int win_1 = player1.Wins, win_2 = player1.Wins;
+            services.Load();
+            Console.WriteLine($"{Player1.Name}\t\t|\t\t{Player2.Name}");
+            int win_1 = Player1.Wins, win_2 = Player2.Wins;
             foreach (GameWords gm in CollectionGameWords.gameWordsCollection)
             {
-                if (gm.player1.Name == player1.Name && gm.player2.Name == player2.Name)
+                if (gm.Player1.Name == Player1.Name && gm.Player2.Name == Player2.Name)
                 {
-                    win_1 += gm.player1.Wins;
-                    win_2 += gm.player2.Wins;
+                    win_1 += gm.Player1.Wins;
+                    win_2 += gm.Player2.Wins;
                 }
-                if (gm.player1.Name == player2.Name && gm.player2.Name == player1.Name)
+                if (gm.Player1.Name == Player2.Name && gm.Player2.Name == Player1.Name)
                 {
-                    win_1 += gm.player2.Wins;
-                    win_2 += gm.player1.Wins;
+                    win_1 += gm.Player2.Wins;
+                    win_2 += gm.Player1.Wins;
                 }
             }
             Console.WriteLine("{0}\t\t|\t\t{1}", win_1, win_2);
@@ -106,10 +176,27 @@ namespace Words
 
         private void TotalScore()
         {
-            Services.Load();
+            services.Load();
+            int win_1, win_2;
             foreach (GameWords gm in CollectionGameWords.gameWordsCollection)
             {
-                Console.WriteLine($"{gm.player1.Name}: {gm.player1.Wins}\t|\t{gm.player2.Name}: {gm.player2.Wins}");
+                win_1 = gm.Player1.Wins;
+                win_2 = gm.Player2.Wins;
+                if (gm.Player1.Name == Player1.Name && gm.Player2.Name == Player2.Name)
+                {
+                    win_1 = Player1.Wins;
+                    win_2 = Player2.Wins;
+                    win_1 += gm.Player1.Wins;
+                    win_2 += gm.Player2.Wins;
+                }
+                if (gm.Player1.Name == Player2.Name && gm.Player2.Name == Player1.Name)
+                {
+                    win_1 = Player1.Wins;
+                    win_2 = Player2.Wins;
+                    win_1 += gm.Player2.Wins;
+                    win_2 += gm.Player1.Wins;
+                }
+                Console.WriteLine($"{gm.Player1.Name}: {win_1}\t|\t{gm.Player2.Name}: {win_2}");
             }
         }
 
@@ -119,6 +206,7 @@ namespace Words
             {
                 Console.Clear();
                 readTimer.Stop();
+                showTimer.Stop();
                 switch (input)
                 {
                     case "/show-words":
@@ -131,18 +219,17 @@ namespace Words
                         TotalScore();
                         break;
                     default:
-                        Console.WriteLine("Неизвестная команда");
+                        Console.WriteLine(Localization.GetLocalizedString("UnknownCommand"));
                         break;
                 }
-                Console.WriteLine("Нажмите Enter, чтобы продолжить игру");
+                Console.WriteLine(Localization.GetLocalizedString("PressEnter"));
                 Console.ReadKey();
                 Console.Clear();
                 return null;
             }
             return input;
         }
-
-
+        
         static bool IsNumberContains(string input)
         {
             return input.All(c => char.IsLetter(c));
@@ -150,63 +237,69 @@ namespace Words
 
         private void TimeLeft(object obj, EventArgs e)
         {
-            readThread.Abort();
-            Console.Clear();
-            Console.WriteLine("Время вышло.");
-            Console.WriteLine();
-            isTimeLeft = true;
+            OnTime();
         }
 
-        private void ConsoleRead()
+        private void ShowTimer(object obj, EventArgs e)
         {
+            x1 = Console.CursorLeft;
+            y1 = Console.CursorTop;
+            Console.SetCursorPosition(x, y);
+            Console.Write(timer.ToString("mm:ss"));
+            timer = timer.AddSeconds(-1);
+            Console.SetCursorPosition(x1, y1);
+        }
+
+        private bool EnterWord()
+        {
+            isTimeLeft = false;
+
+
+            showTimer.Interval = 1000;
+            readTimer.Interval = timeGame;
+            timer = new DateTime(1970, 1, 1).Add(TimeSpan.FromTicks(timeGame * TimeSpan.TicksPerSecond / 1000)).ToLocalTime();
+            showTimer.Start();
+            readTimer.Start();
+
             Console.Clear();
             Console.WriteLine("------------------------------------------------------------------------------------");
+            x = Console.CursorLeft;
+            y = Console.CursorTop;
+            Console.Write(timer.ToString("mm:ss"));
             Console.WriteLine("{0,50}", firstWord);
             Console.WriteLine("------------------------------------------------------------------------------------");
             Console.WriteLine();
 
-            Console.WriteLine(isFirstUser ? $"{ player1.Name }, введите слово:" : $"{ player2.Name }, введите слово:");
+            timer = timer.AddSeconds(-1);
+
+            Console.WriteLine(isFirstUser ? $"{ Player1.Name }, " + Localization.GetLocalizedString("EnteredWord") + ":" : $"{ Player2.Name }, " + Localization.GetLocalizedString("EnteredWord") + ":");
             string text = "";
             while (CheckWord(text = Console.ReadLine()) == false)
             {
+                if (isTimeLeft)
+                {
+                    return false;
+                }
                 if (ConsoleCommand(text) == null)
                 {
-                    ConsoleRead();
-                    readTimer.Start();
-                    return;
+                    if(EnterWord())
+                    {
+                        return true;
+                    }
+                    return false;
                 }
-                Console.WriteLine("Вы ввели неверное слово");
+                Console.WriteLine(Localization.GetLocalizedString("WrongWord"));
             }
-            words.Add(text);
-            isRead = true;
-        }
-
-        private int EnterWord()
-        {
-            isTimeLeft = false;
-            isRead = false;
-
-            Console.Clear();
-            readTimer = new System.Timers.Timer();
-            readTimer.Elapsed += new ElapsedEventHandler(TimeLeft);
-            readTimer.Interval = 3300;
-
-            readThread = new Thread(ConsoleRead);
-            readThread.Priority = ThreadPriority.Highest;
-
-            readTimer.Start();
-            readThread.Start();
-
-            while (isTimeLeft == false && isRead == false) ;
-            readTimer.Stop();
-            if (isRead == false)
+            if (isTimeLeft)
             {
-                return 0;
+                return false;
             }
+            readTimer.Stop();
+            showTimer.Stop();
+            words.Add(text);
+            
             isFirstUser = isFirstUser ? false : true;
-            readThread.Abort();
-            isRead = false;
-            return 1;
+            return true;
         }
 
         public bool CheckWord(string input)
@@ -214,11 +307,13 @@ namespace Words
             int len = input.Length;
             if (len == 0) return false;
             string copyFirstWord = string.Copy(firstWord);
+            int clen = len;
+            int ch;
             for (int i = 0; i < len; i++)
             {
-                if (copyFirstWord.IndexOf(input[i]) != -1)
+                if ((ch = copyFirstWord.IndexOf(input[i])) != -1 && !words.Any(c => c.Equals(input)))
                 {
-                    copyFirstWord.Remove(i, 1);
+                    copyFirstWord = copyFirstWord.Remove(ch, 1);
                 }
                 else
                 {
@@ -237,48 +332,48 @@ namespace Words
             }
             else
             {
-                Console.WriteLine("Слово не соответствует");
+                Console.WriteLine(Localization.GetLocalizedString("WrongWord"));
                 return false;
             }
         }
 
         private void EnterFirstWord()
         {
-            Console.WriteLine("Введите первое слово");
+            Console.WriteLine(Localization.GetLocalizedString("FirstWord"));
             while (!CheckFirstWord(firstWord = Console.ReadLine()))
             {
-                Console.WriteLine("Пожалуйста, введите слово ещё раз");
+                Console.WriteLine(Localization.GetLocalizedString("EnterAgain"));
             }
         }
+
+
 
         private void Round()
         {
             Console.Clear();
             EnterFirstWord();
 
-            while (EnterWord() == 1) ;
+            while (EnterWord());
 
             if (isFirstUser)
-                player2.Wins++;
+                Player2.Wins++;
             else
-                player1.Wins++;
-            Console.WriteLine(isFirstUser ? $"{ player2.Name }, победил !" : $"{ player1.Name }, победил");
+                Player1.Wins++;
+            Console.WriteLine(isFirstUser ? $"{ Player2.Name }," + Localization.GetLocalizedString("Win") + " !" : $"{ Player1.Name }," + Localization.GetLocalizedString("Win") + " !");
             Console.WriteLine();
         }
 
         public void StopProcess()
         {
-            if (isRead == false && firstWord != null)
+            if (isTimeLeft == false && firstWord != null)
             {
                 if (isFirstUser)
-                    player2.Wins++;
+                    Player2.Wins++;
                 else
-                    player1.Wins++;
-                Services.Save(this);
+                    Player1.Wins++;
+                services.Save(this);
             }
                 
         }
-
-        
     }
 }
